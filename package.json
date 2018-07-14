@@ -1,0 +1,31 @@
+{
+	"name": "websocket-pool",
+	"description": "Manage a pool of WebSocket connections.",
+	"version": "1.0.0",
+	"main": "index.js",
+	"files": [
+		"index.js"
+	],
+	"keywords": [
+		"websocket",
+		"ws",
+		"pool",
+		"load balancing"
+	],
+	"author": "Jannis R <mail@jannisr.de>",
+	"homepage": "https://github.com/derhuerst/websocket-pool",
+	"repository": "derhuerst/websocket-pool",
+	"bugs": "https://github.com/derhuerst/websocket-pool/issues",
+	"license": "ISC",
+	"engines": {
+		"node": ">=6"
+	},
+	"dependencies": {
+	},
+	"devDependencies": {
+	},
+	"scripts": {
+		"test": "env NODE_ENV=dev node test.js",
+		"prepublishOnly": "npm test"
+	}
+}
