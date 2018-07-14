@@ -8,19 +8,20 @@ const defaults = {
 	// todo: chooseConnection(msg, connections) => connection
 }
 
-const createPool = (WebSocket, createScheduler, urls, opt = {}) => {
+const createPool = (WebSocket, createScheduler, opt = {}) => {
 	opt = Object.assign({}, defaults, opt)
 
 	const pool = new EventEmitter()
-
 	const scheduler = createScheduler([])
-	// todo: index-based?
-	const connections = Object.create(null) // by url
+
+	const connections = []
+	let connectionsI = 0
 	let nrOfOpenConnections = 0
 
 	const add = (url) => {
-		const op = operation(Object.assign({}, opt.retry))
+		const i = connectionsI++
 
+		const op = operation(Object.assign({}, opt.retry))
 		op.attempt((attemptNr) => {
 			pool.emit('connection-retry', url, attemptNr)
 			open(url, (err) => {
@@ -28,17 +29,28 @@ const createPool = (WebSocket, createScheduler, urls, opt = {}) => {
 				if (!willRetry) pool.emit('error', op.mainError())
 			})
 		})
+
+		const remove = () => {
+			if (!connections[i]) return;
+			const ws = connections[i]
+			connections[i] = null
+			op.stop()
+			ws.close()
+		}
+		return remove
 	}
 
-	const open = (url) => {
+	const open = (url, i) => {
 		const ws = new WebSocket(url)
-		connections[url] = ws
-		ws.addEventListener('message', onMessage)
+		connections[i] = ws
+		ws.addEventListener('message', (msg) => {
+			pool.emit('message', msg, ws)
+		})
 
 		const onceOpen = () => {
 			ws.removeEventListener('open', onceOpen)
 
-			scheduler.add(url)
+			scheduler.add(i)
 
 			pool.emit('connection-open', ws)
 			nrOfOpenConnections++
@@ -49,8 +61,8 @@ const createPool = (WebSocket, createScheduler, urls, opt = {}) => {
 		const onceClosed = (ev) => {
 			ws.removeEventListener('close', onceClosed)
 
-			scheduler.remove(url)
-			delete connections[url]
+			scheduler.remove(i)
+			connections[i] = null
 
 			pool.emit('connection-close', ev.target, ev.code, ev.reason)
 			nrOfOpenConnections--
@@ -69,24 +81,14 @@ const createPool = (WebSocket, createScheduler, urls, opt = {}) => {
 		ws.addEventListener('ping', data => ws.pong(data))
 	}
 
-	const onMessage = (msg) => {
-		pool.emit('message', msg)
-	}
-
 	const send = (msg) => {
-		const url = scheduler.get()
-		if (!url || !connections[url]) {
-			throw new Error('no connection available') // todo: wait
-		}
-
-		const ws = connections[url]
+		const i = scheduler.get()
+		const ws = connections[i]
+		if (!ws) throw new Error('no connection available') // todo: wait
 		ws.send(msg)
 	}
 
-	setTimeout(() => {
-		for (let url of urls) add(url)
-	}, 0)
-
+	pool.add = add
 	pool.send = send
 	return pool
 }
