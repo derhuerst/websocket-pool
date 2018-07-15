@@ -27,7 +27,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 		op.attempt((attemptNr) => {
 			debug(i, 'reconnect', attemptNr)
 			pool.emit('connection-retry', url, attemptNr)
-			open(url, (err) => {
+			open(url, i, (err) => {
 				debug(i, 'closed')
 				const willRetry = op.retry(err)
 				if (!willRetry) pool.emit('error', op.mainError())
@@ -46,7 +46,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 		return remove
 	}
 
-	const open = (url, i) => {
+	const open = (url, i, onClose) => {
 		const ws = new WebSocket(url)
 		connections[i] = ws
 		ws.addEventListener('message', (msg) => {
@@ -94,7 +94,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 		const i = scheduler.get()
 		const ws = connections[i]
 		if (!ws) throw new Error('no connection available') // todo: wait
-		debug('send', msg, 'via', i)
+		debug(i, 'send', msg)
 		ws.send(msg)
 	}
 

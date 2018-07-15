@@ -36,9 +36,7 @@ pool.on('message', msg => console.log('<-', msg.data))
 
 // >= 1 connection in the pool is open
 pool.once('open', () => {
-	setInterval(() => {
-		pool.send('hello there')
-	}, 3000)
+	pool.send('hello there')
 })
 
 // the pool failed to reconnect after retrying
