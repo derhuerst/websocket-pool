@@ -2,6 +2,7 @@
 
 const {EventEmitter} = require('events')
 const {operation} = require('retry')
+const debug = require('debug')('websocket-pool')
 
 const defaults = {
 	retry: {}
@@ -20,11 +21,14 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 
 	const add = (url) => {
 		const i = connectionsI++
+		debug('adding', url, 'as', i)
 
 		const op = operation(Object.assign({}, opt.retry))
 		op.attempt((attemptNr) => {
+			debug(i, 'reconnect', attemptNr)
 			pool.emit('connection-retry', url, attemptNr)
 			open(url, (err) => {
+				debug(i, 'closed')
 				const willRetry = op.retry(err)
 				if (!willRetry) pool.emit('error', op.mainError())
 			})
@@ -32,6 +36,8 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 
 		const remove = () => {
 			if (!connections[i]) return;
+			debug('removing', i, url)
+
 			const ws = connections[i]
 			connections[i] = null
 			op.stop()
@@ -49,6 +55,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 
 		const onceOpen = () => {
 			ws.removeEventListener('open', onceOpen)
+			debug(i, 'open')
 
 			scheduler.add(i)
 
@@ -60,6 +67,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 
 		const onceClosed = (ev) => {
 			ws.removeEventListener('close', onceClosed)
+			debug(i, 'close')
 
 			scheduler.remove(i)
 			connections[i] = null
@@ -75,6 +83,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 		ws.addEventListener('close', onceClosed)
 
 		ws.addEventListener('error', (ev) => {
+			debug(i, 'error', ev.error)
 			pool.emit('connection-error', ev.target, ev.error)
 		})
 
@@ -85,6 +94,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 		const i = scheduler.get()
 		const ws = connections[i]
 		if (!ws) throw new Error('no connection available') // todo: wait
+		debug('send', msg, 'via', i)
 		ws.send(msg)
 	}
 
