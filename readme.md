@@ -32,7 +32,10 @@ const createScheduler = (urls) => {
 const pool = createPool(WebSocket, createScheduler)
 
 // incoming message, just like websocket.on('message')
-pool.on('message', msg => console.log('<-', msg.data))
+pool.on('message', (msg) => {
+	console.log('<-', msg.data)
+	pool.close()
+})
 
 // >= 1 connection in the pool is open
 pool.once('open', () => {

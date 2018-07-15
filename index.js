@@ -4,6 +4,8 @@ const {EventEmitter} = require('events')
 const {operation} = require('retry')
 const debug = require('debug')('websocket-pool')
 
+const NORMAL_CLOSE = 1000
+
 const defaults = {
 	retry: {}
 	// todo: chooseConnection(msg, connections) => connection
@@ -18,32 +20,39 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 	const connections = []
 	let connectionsI = 0
 	let nrOfOpenConnections = 0
+	const ops = []
 
 	const add = (url) => {
 		const i = connectionsI++
 		debug('adding', url, 'as', i)
-
 		const op = operation(Object.assign({}, opt.retry))
+		ops[i] = op
+
 		op.attempt((attemptNr) => {
 			debug(i, 'reconnect', attemptNr)
 			pool.emit('connection-retry', url, attemptNr)
 			open(url, i, (err) => {
 				debug(i, 'closed')
 				const willRetry = op.retry(err)
-				if (!willRetry) pool.emit('error', op.mainError())
+				if (!willRetry && err.code !== NORMAL_CLOSE) {
+					pool.emit('error', op.mainError())
+				}
 			})
 		})
 
-		const remove = () => {
-			if (!connections[i]) return;
-			debug('removing', i, url)
+		return () => remove(i)
+	}
 
-			const ws = connections[i]
-			connections[i] = null
-			op.stop()
-			ws.close()
-		}
-		return remove
+	const remove = (i) => {
+		const ws = connections[i]
+		if (!ws) throw new Error('unknown connection ' + i)
+		debug('removing', i, ws.url)
+
+		const op = ops[i]
+		ops[i] = null
+		op.stop()
+		connections[i] = null
+		ws.close(NORMAL_CLOSE, 'removed from pool')
 	}
 
 	const open = (url, i, onClose) => {
@@ -98,8 +107,16 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 		ws.send(msg)
 	}
 
+	const close = () => {
+		for (let i = 0; i <= connectionsI; i++) {
+			if (connections[i]) remove(i)
+		}
+	}
+
 	pool.add = add
+	pool.remove = remove
 	pool.send = send
+	pool.close = close
 	return pool
 }
 
