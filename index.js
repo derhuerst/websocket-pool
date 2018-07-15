@@ -7,7 +7,7 @@ const debug = require('debug')('websocket-pool')
 const NORMAL_CLOSE = 1000
 
 const noConnectionAvailable = new Error('no connection available')
-nrOfOpenConnections.code = 'noConnectionAvailable'
+noConnectionAvailable.code = 'noConnectionAvailable'
 
 const defaults = {
 	retry: {}
