@@ -6,6 +6,9 @@ const debug = require('debug')('websocket-pool')
 
 const NORMAL_CLOSE = 1000
 
+const noConnectionAvailable = new Error('no connection available')
+nrOfOpenConnections.code = 'noConnectionAvailable'
+
 const defaults = {
 	retry: {}
 	// todo: chooseConnection(msg, connections) => connection
@@ -102,7 +105,7 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 	const send = (msg) => {
 		const i = scheduler.get()
 		const ws = connections[i]
-		if (!ws) throw new Error('no connection available') // todo: wait
+		if (!ws) throw noConnectionAvailable // todo: wait
 		debug(i, 'send', msg)
 		ws.send(msg)
 	}
@@ -120,4 +123,5 @@ const createPool = (WebSocket, createScheduler, opt = {}) => {
 	return pool
 }
 
+createPool.noConnectionAvailable = noConnectionAvailable
 module.exports = createPool
