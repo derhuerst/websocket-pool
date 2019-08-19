@@ -1,16 +1,10 @@
 'use strict'
 
 const WebSocket = require('ws')
-const {RoundRobin} = require('square-batman')
+const createRoundRobin = require('@derhuerst/round-robin-scheduler')
 const createPool = require('.')
 
-const createScheduler = (urls) => {
-	const s = new RoundRobin(urls)
-	// square-batman is not abstract-scheduler-compatible yet
-	s.get = s.next
-	return s
-}
-const pool = createPool(WebSocket, createScheduler)
+const pool = createPool(WebSocket, createRoundRobin)
 
 pool.on('message', (msg, ws) => {
 	console.log(ws.url, 'says:', msg.data)

@@ -28,7 +28,7 @@
 		"retry": "^0.12.0"
 	},
 	"devDependencies": {
-		"square-batman": "^1.0.0",
+		"@derhuerst/round-robin-scheduler": "^1.0.3",
 		"ws": "^5.2.2"
 	},
 	"scripts": {

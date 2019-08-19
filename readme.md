@@ -21,15 +21,9 @@ npm install websocket-pool
 ```js
 const createPool = require('websocket-pool')
 const WebSocket = require('ws')
-const {RoundRobin} = require('square-batman')
+const createRoundRobin = require('@derhuerst/round-robin-scheduler')
 
-const createScheduler = (urls) => {
-	const scheduler = new RoundRobin(urls)
-	// square-batman is not abstract-scheduler-compatible yet
-	scheduler.get = scheduler.next
-	return scheduler
-}
-const pool = createPool(WebSocket, createScheduler)
+const pool = createPool(WebSocket, createRoundRobin)
 
 // incoming message, just like websocket.on('message')
 pool.on('message', (msg) => {
@@ -63,6 +57,7 @@ The `createScheduler` function must implement the [`abstract-scheduler` interfac
 ## Related
 
 - [`reconnecting-websocket`](https://www.npmjs.com/package/reconnecting-websocket) – If want to connect to only one server.
+- [`node-pool`](https://github.com/coopernurse/node-pool) – Generic pool. You have to write the adapter to the resource.
 
 
 ## Contributing
