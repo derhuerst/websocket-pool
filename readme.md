@@ -5,8 +5,8 @@
 [![npm version](https://img.shields.io/npm/v/websocket-pool.svg)](https://www.npmjs.com/package/websocket-pool)
 [![build status](https://api.travis-ci.org/derhuerst/websocket-pool.svg?branch=master)](https://travis-ci.org/derhuerst/websocket-pool)
 ![ISC-licensed](https://img.shields.io/github/license/derhuerst/websocket-pool.svg)
-[![chat with me on Gitter](https://img.shields.io/badge/chat%20with%20me-on%20gitter-512e92.svg)](https://gitter.im/derhuerst)
-[![support me on Patreon](https://img.shields.io/badge/support%20me-on%20patreon-fa7664.svg)](https://patreon.com/derhuerst)
+[![support me via GitHub Sponsors](https://img.shields.io/badge/support%20me-donate-fa7664.svg)](https://github.com/sponsors/derhuerst)
+[![chat with me on Twitter](https://img.shields.io/badge/chat%20with%20me-on%20Twitter-1da1f2.svg)](https://twitter.com/derhuerst)
 
 
 ## Installation
